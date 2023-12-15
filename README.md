@@ -1,12 +1,19 @@
 # Comandos iniciais:
-<pre>
+``` bash
     mkdir entity-framework
     cd entity-framework
     dotnet new mvc
-</pre>
+```
+
+# Componentes instalados:
+``` bash
+    dotnet add package Microsoft.EntityFrameworkCore --version 7.0.14
+    dotnet add package Microsoft.EntityFrameworkCore.Tools --version 7.0.14
+    dotnet add package Pomelo.EntityFrameworkCore.MySql --version 7.0.0
+```
 
 # Comandos git:
-<pre>
+``` bash
     git init
     git add .
     git commit -m "Iniciando projeto"
@@ -15,11 +22,12 @@
     git remote add origin https://github.com/Vinijs/entity-framework
     git branch -M main
     git push -u origin main
-</pre> 
+```
 
-# Componentes instalados:
-<pre>
-    dotnet add package Microsoft.EntityFrameworkCore --version 7.0.14
-    dotnet add package Microsoft.EntityFrameworkCore.Tools --version 7.0.14
-    dotnet add package Pomelo.EntityFrameworkCore.MySql --version 7.0.0
-</pre> 
+# Comandos para migração:
+
+``` bash
+dotnet ef migrations add ClienteAdd
+dotnet ef database update
+
+```
