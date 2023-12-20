@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using entity_framework.Models;
 using entity_framework.Servicos.Database;
+using entity_framework.ModelViews;
 
 namespace entity_framework.Controllers
 {
@@ -22,6 +23,9 @@ namespace entity_framework.Controllers
         // GET: Clientes
         public async Task<IActionResult> Index()
         {
+            //var listaClientes = await _context.Clientes.Contains(cliente).Where(c => c.Nome.ToLower().Contains("d")).ToListAsync();
+
+
             var dbContexto = _context.Clientes.Include(c => c.Endereco);
             return View(await dbContexto.ToListAsync());
         }
@@ -41,6 +45,52 @@ namespace entity_framework.Controllers
             {
                 return NotFound();
             }
+
+            var pedidosContext = _context.Clientes.Where(c => c.Id == cliente.Id);
+            var pedidos = await pedidosContext.Join(
+                _context.Pedidos,
+                cli => cli.Id,
+                ped => ped.ClienteId,
+
+                (cli, ped) => new ClientePedido {
+                    Cliente = cli.Nome,
+                    ValorTotal = ped.ValorTotal,
+                    PedidoId = ped.Id
+                }
+            ).Join(
+                _context.PedidosProdutos,
+                ped => ped.PedidoId,
+                pp => pp.PedidoId,
+                (ped,pp) => new ClientePedido {
+                    Cliente = ped.Cliente,
+                    ValorTotal = ped.ValorTotal,
+                    PedidoId = ped.PedidoId,
+                    Quantidade = pp.Quantidade,
+                    Valor = pp.Valor,
+                    ProdutoId = pp.ProdutoId,
+                }
+            ).Join(
+                _context.Produtos,
+                pCliente => pCliente.ProdutoId,
+                produto => produto.Id,
+                (pCliente,produto) => new ClientePedido {
+                    Cliente = pCliente.Cliente,
+                    ValorTotal = pCliente.ValorTotal,
+                    PedidoId = pCliente.PedidoId,
+                    Quantidade = pCliente.Quantidade,
+                    Valor = pCliente.Valor,
+                    Produto = produto.Nome,
+                }
+            ).ToListAsync(); // ToQueryString(); mostra o SQL GERADO
+
+            /*
+                COLOCAR QUERY SQL ENTITY APÓS FORMATAÇÃO
+
+
+            */
+
+
+             ViewBag.pedidos = pedidos;
 
             return View(cliente);
         }
