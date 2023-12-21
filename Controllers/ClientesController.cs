@@ -46,6 +46,105 @@ namespace entity_framework.Controllers
                 return NotFound();
             }
 
+            var pedidosContext = _context.Clientes;
+            var pedidosSql =  pedidosContext.Join(
+                _context.Pedidos,
+                cli => cli.Id,
+                ped => ped.ClienteId,
+
+                (cli, ped) => new ClientePedido {
+                    Cliente = cli.Nome,
+                    ValorTotal = ped.ValorTotal
+                }
+            ).GroupBy(p => p.Cliente).Select(c => new {
+                Nome = c.Key,
+                ValorTotal = c.Sum(cp => cp.ValorTotal)
+            }).ToQueryString();
+
+
+
+            var pedidosContexte = _context.Clientes;
+            var pedidos = await pedidosContext.Join(
+                _context.Pedidos,
+                cli => cli.Id,
+                ped => ped.ClienteId,
+
+                (cli, ped) => new ClientePedido {
+                    Cliente = cli.Nome,
+                    ValorTotal = ped.ValorTotal
+                }
+            ).GroupBy(p => p.Cliente).Select(c => new {
+                Nome = c.Key,
+                ValorTotal = c.Sum(cp => cp.ValorTotal)
+            }).ToListAsync();
+
+
+            
+
+            string x = "";
+
+            /*
+            using(var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "select clientes.nome as nome, sum(pedidos.valor_total) as ValorTotal from pedidos " +
+                                        "inner join clientes on clientes.id = pedidos.cliente_id " +
+                                        "group by clientes.id";
+
+                _context.Database.OpenConnection();
+
+
+                   using (var result = await command.ExecuteReaderAsync())
+                   {
+                        var pedidos_agrupados = new List<dynamic>();
+                        while(result.Read())
+                        {
+                            pedidos_agrupados.Add(new{
+                                Nome = result["nome"].ToString(),
+                                ValorTotal = Convert.ToDouble(result["ValorTotal"]),
+                            });
+                        }
+                        ViewBag.pedidos = pedidos_agrupados;
+                   }
+
+                   _context.Database.CloseConnection();
+            }
+            */
+
+            /*
+            using(var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "SELECT c.nome AS Cliente,p.valor_total AS ValorTotal, " +
+                   "p.id AS PedidoId, p0.quantidade AS Quantidade,p0.valor AS Valor, p1.nome AS Produto " +
+                   "FROM clientes AS c INNER JOIN pedidos AS p ON c.id = p.cliente_id " +
+                   "INNER JOIN pedidos_produtos AS p0 ON p.id = p0.pedido_id " +
+                   "INNER JOIN produtos AS p1 ON p0.produto_id = p1.id WHERE c.id = " + cliente.Id;
+
+                _context.Database.OpenConnection();
+
+
+                   using (var result = await command.ExecuteReaderAsync())
+                   {
+                        var pedidos = new List<ClientePedido>();
+                        while(result.Read())
+                        {
+                            pedidos.Add(new ClientePedido{
+                                Cliente = result["cliente"].ToString(),
+                                ValorTotal = Convert.ToDouble(result["ValorTotal"]),
+                                PedidoId = Convert.ToInt32(result["PedidoId"]),
+                                Quantidade = Convert.ToInt32(result["quantidade"]),
+                                Valor = Convert.ToDouble(result["valor"]),
+                                Produto = result["produto"].ToString(),
+
+                            });
+                        }
+                        ViewBag.pedidos = pedidos;
+                   }
+
+                   _context.Database.CloseConnection();
+            }
+            */
+
+            /*
             var pedidosContext = _context.Clientes.Where(c => c.Id == cliente.Id);
             var pedidos = await pedidosContext.Join(
                 _context.Pedidos,
@@ -82,15 +181,22 @@ namespace entity_framework.Controllers
                     Produto = produto.Nome,
                 }
             ).ToListAsync(); // ToQueryString(); mostra o SQL GERADO
+            */
 
             /*
-                COLOCAR QUERY SQL ENTITY APÓS FORMATAÇÃO
-
-
+                SELECT c.nome AS Cliente,
+                p.valor_total AS ValorTotal,
+                p.id AS PedidoId, p0.quantidade AS Quantidade,
+                p0.valor AS Valor, p1.nome AS Produto
+                FROM clientes AS c
+                INNER JOIN pedidos AS p ON c.id = p.cliente_id
+                INNER JOIN pedidos_produtos AS p0 ON p.id = p0.pedido_id
+                INNER JOIN produtos AS p1 ON p0.produto_id = p1.id
+                WHERE c.id = 3;
             */
 
 
-             ViewBag.pedidos = pedidos;
+            //  ViewBag.pedidos = pedidos;
 
             return View(cliente);
         }
