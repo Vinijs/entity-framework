@@ -46,40 +46,97 @@ namespace entity_framework.Controllers
                 return NotFound();
             }
 
-            var pedidosContext = _context.Clientes;
-            var pedidosSql =  pedidosContext.Join(
-                _context.Pedidos,
-                cli => cli.Id,
-                ped => ped.ClienteId,
+            // var clientes = from c in _context.Clientes
+            //     join e in _context.Enderecos on c.EnderecoId equals e.Id
+            //     join p in _context.Pedidos on c.Id equals p.ClienteId
+            //     join pp in _context.PedidosProdutos on p.Id equals pp.PedidoId
+            //     join prod in _context.Produtos on pp.ProdutoId equals prod.Id
+            //     where c.Nome == "Danilo" && c.Id == 3
+            //     select new {
+            //     Nome = c.Nome,
+            //     Endereco = e.Logradouro,
+            //     PedidoId = p.Id,
+            //     Quantidade = pp.Quantidade,
+            //     NomeProduto = prod.Nome
+            //     };
 
-                (cli, ped) => new ClientePedido {
-                    Cliente = cli.Nome,
-                    ValorTotal = ped.ValorTotal
-                }
-            ).GroupBy(p => p.Cliente).Select(c => new {
-                Nome = c.Key,
-                ValorTotal = c.Sum(cp => cp.ValorTotal)
-            }).ToQueryString();
+            //     foreach (var cli in clientes)
+            //     {
+            //         Console.WriteLine(cli);
+            //     }
+
+            //  var clientes = from c in _context.Clientes
+            //     join p in _context.Pedidos on c.Id equals p.ClienteId
+            //     group p by c.Nome into grouping
+            //     select new {
+            //     Nome = grouping.Key,
+            //     Total = grouping.Sum(g => g.ValorTotal)
+            //     };
+
+            //     foreach (var cli in clientes)
+            //     {
+            //         Console.WriteLine(cli);
+            //     }
+
+            // var clientes = from c in _context.Clientes
+            //     join p in _context.Pedidos on c.Id equals p.ClienteId
+            //     join pp in _context.PedidosProdutos on p.Id equals pp.PedidoId
+            //     group p by new {c.Nome,pp.Quantidade} into grouping
+            //     select new {
+            //     Nome = grouping.Key,
+            //     Quantidade = grouping.Key.Quantidade,
+            //     Total = grouping.Sum(g => g.ValorTotal)
+            //     };
+
+            var clientes = from c in _context.Clientes
+                           where (
+                               from p in _context.Pedidos
+                               where p.ClienteId == c.Id
+                               select p
+
+                           ).Count() >= 2
+                           select c.Nome;
+
+            foreach (var cli in clientes)
+            {
+                Console.WriteLine(cli);
+            }
+
+            var y = "";
+
+            // var pedidosContext = _context.Clientes;
+            // var pedidosSql =  pedidosContext.Join(
+            //     _context.Pedidos,
+            //     cli => cli.Id,
+            //     ped => ped.ClienteId,
+
+            //     (cli, ped) => new ClientePedido {
+            //         Cliente = cli.Nome,
+            //         ValorTotal = ped.ValorTotal
+            //     }
+            // ).GroupBy(p => p.Cliente).Select(c => new {
+            //     Nome = c.Key,
+            //     ValorTotal = c.Sum(cp => cp.ValorTotal)
+            // }).ToQueryString();
 
 
 
-            var pedidosContexte = _context.Clientes;
-            var pedidos = await pedidosContext.Join(
-                _context.Pedidos,
-                cli => cli.Id,
-                ped => ped.ClienteId,
+            // var pedidosContexte = _context.Clientes;
+            // var pedidos = await pedidosContext.Join(
+            //     _context.Pedidos,
+            //     cli => cli.Id,
+            //     ped => ped.ClienteId,
 
-                (cli, ped) => new ClientePedido {
-                    Cliente = cli.Nome,
-                    ValorTotal = ped.ValorTotal
-                }
-            ).GroupBy(p => p.Cliente).Select(c => new {
-                Nome = c.Key,
-                ValorTotal = c.Sum(cp => cp.ValorTotal)
-            }).ToListAsync();
+            //     (cli, ped) => new ClientePedido {
+            //         Cliente = cli.Nome,
+            //         ValorTotal = ped.ValorTotal
+            //     }
+            // ).GroupBy(p => p.Cliente).Select(c => new {
+            //     Nome = c.Key,
+            //     ValorTotal = c.Sum(cp => cp.ValorTotal)
+            // }).ToListAsync();
 
 
-            
 
             string x = "";
 
@@ -311,14 +368,14 @@ namespace entity_framework.Controllers
             {
                 _context.Clientes.Remove(cliente);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ClienteExists(int id)
         {
-          return _context.Clientes.Any(e => e.Id == id);
+            return _context.Clientes.Any(e => e.Id == id);
         }
     }
 }
