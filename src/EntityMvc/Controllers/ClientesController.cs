@@ -1,4 +1,7 @@
+using Entity.Clientes.Application.Events;
 using Entity.Clientes.Domain.Entidades;
+using Entity.Clientes.Domain.Repositories;
+using Entity.Shared.Mediator;
 using entity_framework.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,240 +11,213 @@ namespace entity_framework.Controllers
 {
     public class ClientesController : Controller
     {
-        private readonly ClienteDbContexto _context;
+       private readonly IClienteRepository _clienteRepository;
+        private readonly IMediatorHandler _mediator;
 
-        public ClientesController(ClienteDbContexto context)
+        public ClientesController(IClienteRepository clienteRepository, IMediatorHandler mediator)
         {
-            _context = context;
+            _clienteRepository = clienteRepository;
+            _mediator = mediator;
         }
 
         // GET: Clientes
         public async Task<IActionResult> Index()
         {
             //Utilização de AsNoTracking para remover rastreio das entidades agilizando as consultas
-            var listaClientes = await _context.Clientes.
-                Where(c => c.Nome.ToLower().Contains("d") && c.Nome.ToLower().Contains("o"))
-                .Select(x => new { Nome = x.Nome, Logradouro = x.Endereco.Logradouro}).ToListAsync();
+            var listaClientes = (await _clienteRepository.BuscarTodosComEndereco()).Where(c => 
+                c.Nome.ToLower().Contains("d") && c.Nome.ToLower().Contains("o")
+            ).Select(x => new { Nome = x.Nome, Logradouro = x.Endereco.Logradouro}).ToList();
 
-            var listaClientes2 = await _context.Clientes.
-                Where(c => c.Nome.ToLower().Contains("d") && c.Nome.ToLower().Contains("o"))
-                .Select(x => new { Cliente = x, Logradouro = x.Endereco.Logradouro})
-                .AsNoTrackingWithIdentityResolution()
-                .ToListAsync();
+            var listaClientes2 =  (await _clienteRepository.BuscarTodosComEndereco()).Where(c => 
+                c.Nome.ToLower().Contains("d") && c.Nome.ToLower().Contains("o")
+            ).Select(x => new { Cliente = x, Logradouro = x.Endereco.Logradouro}).ToList();
 
+            // var dbContexto = _clienteRepository.Clientes.Include(c => c.Endereco);
+            // var lista = await dbContexto.AsNoTrackingWithIdentityResolution().ToListAsync();
+            var lista = await _clienteRepository.BuscarTodosComEndereco();
 
-            var dbContexto = _context.Clientes.Include(c => c.Endereco);
-            var lista = await dbContexto.AsNoTrackingWithIdentityResolution().ToListAsync();
             foreach (var cliente in lista)
             {
                 if(cliente.DataCadastro == null)
-                {
                     cliente.DataCadastro = DateTime.Now;
-                }                
             }
             return View(lista);
         }
 
         // GET: Clientes/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null || _context.Clientes == null)
-            {
-                return NotFound();
-            }
-
-            var cliente = await _context.Clientes
-                .Include(c => c.Endereco)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var cliente = await _clienteRepository.BuscarClienteEndereco(id);
             if (cliente == null)
             {
                 return NotFound();
             }
 
-            // var clientes = from c in _context.Clientes
-            //     join e in _context.Enderecos on c.EnderecoId equals e.Id
-            //     join p in _context.Pedidos on c.Id equals p.ClienteId
-            //     join pp in _context.PedidosProdutos on p.Id equals pp.PedidoId
-            //     join prod in _context.Produtos on pp.ProdutoId equals prod.Id
-            //     where c.Nome == "Danilo" && c.Id == 3
+
+            // var clientes = from c in _clienteRepository.Clientes
+            //     join e in _clienteRepository.Enderecos on c.EnderecoId equals e.Id
+            //     join p in _clienteRepository.Pedidos on c.Id equals p.ClienteId
+            //     join pp in _clienteRepository.PedidosProdutos on p.Id equals pp.PedidoId
+            //     join produto in _clienteRepository.Produtos on pp.ProdutoId equals produto.Id
+            //     where c.Nome == "Danilo" && c.Id == 1
             //     select new {
-            //     Nome = c.Nome,
-            //     Endereco = e.Logradouro,
-            //     PedidoId = p.Id,
-            //     Quantidade = pp.Quantidade,
-            //     NomeProduto = prod.Nome
+            //         Nome = c.Nome,
+            //         Endereco = e.Logradouro,
+            //         PedidoId = p.Id,
+            //         Quantidade = pp.Quantidade,
+            //         NomeProduto = produto.Nome,
             //     };
-
-            //     foreach (var cli in clientes)
-            //     {
-            //         Console.WriteLine(cli);
-            //     }
-
-            //  var clientes = from c in _context.Clientes
-            //     join p in _context.Pedidos on c.Id equals p.ClienteId
-            //     group p by c.Nome into grouping
-            //     select new {
-            //     Nome = grouping.Key,
-            //     Total = grouping.Sum(g => g.ValorTotal)
-            //     };
-
-            //     foreach (var cli in clientes)
-            //     {
-            //         Console.WriteLine(cli);
-            //     }
-
-            // var clientes = from c in _context.Clientes
-            //     join p in _context.Pedidos on c.Id equals p.ClienteId
-            //     join pp in _context.PedidosProdutos on p.Id equals pp.PedidoId
-            //     group p by new {c.Nome,pp.Quantidade} into grouping
-            //     select new {
-            //     Nome = grouping.Key,
-            //     Quantidade = grouping.Key.Quantidade,
-            //     Total = grouping.Sum(g => g.ValorTotal)
-            //     };
-
-            // var clientes = from c in _context.Clientes
-            //                where (
-            //                    from p in _context.Pedidos
-            //                    where p.ClienteId == c.Id
-            //                    select p
-
-            //                ).Count() >= 2
-            //                select c.Nome;
 
             // foreach (var cli in clientes)
             // {
             //     Console.WriteLine(cli);
             // }
 
-            var y = "";
 
-            // var pedidosContext = _context.Clientes;
-            // var pedidosSql =  pedidosContext.Join(
-            //     _context.Pedidos,
+            // var clientes = from c in _clienteRepository.Clientes
+            // join p in _clienteRepository.Pedidos on c.Id equals p.ClienteId
+            // group p by c.Nome into grouping
+            // select new {
+            //     Nome = grouping.Key,
+            //     Total = grouping.Sum( g => g.ValorTotal)
+            // };
+
+            // var clientes = from c in _clienteRepository.Clientes
+            // join p in _clienteRepository.Pedidos on c.Id equals p.ClienteId
+            // join pp in _clienteRepository.PedidosProdutos on p.Id equals pp.PedidoId
+            // group p by new { c.Nome, pp.Quantidade } into grouping
+            // select new {
+            //     Nome = grouping.Key.Nome,
+            //     Quantidade = grouping.Key.Quantidade,
+            //     Total = grouping.Sum( g => g.ValorTotal)
+            // };
+
+
+        // var clientes = from c in _clienteRepository.Clientes
+        // where (
+        //     from p in _clienteRepository.Pedidos
+        //     where p.ClienteId == c.Id
+        //     select p
+        // ).Count() >= 2
+        // select c.Nome;
+
+        // foreach (var cli in clientes)
+        // {
+        //     Console.WriteLine(cli);
+        // }
+
+
+            var x = "";
+
+
+            
+
+            // var pedidosContext = _clienteRepository.Clientes;
+            // var pedidosSql = pedidosContext.Join(
+            //     _clienteRepository.Pedidos,
             //     cli => cli.Id,
             //     ped => ped.ClienteId,
-
             //     (cli, ped) => new ClientePedido {
             //         Cliente = cli.Nome,
             //         ValorTotal = ped.ValorTotal
             //     }
             // ).GroupBy(p => p.Cliente).Select(c => new {
             //     Nome = c.Key,
-            //     ValorTotal = c.Sum(cp => cp.ValorTotal)
+            //     ValorTotal = c.Sum( cp => cp.ValorTotal )
             // }).ToQueryString();
 
-
-
-            // var pedidosContexte = _context.Clientes;
-            // var pedidos = await pedidosContext.Join(
-            //     _context.Pedidos,
+            //  var pedidos = await pedidosContext.Join(
+            //     _clienteRepository.Pedidos,
             //     cli => cli.Id,
             //     ped => ped.ClienteId,
-
             //     (cli, ped) => new ClientePedido {
             //         Cliente = cli.Nome,
             //         ValorTotal = ped.ValorTotal
             //     }
             // ).GroupBy(p => p.Cliente).Select(c => new {
             //     Nome = c.Key,
-            //     ValorTotal = c.Sum(cp => cp.ValorTotal)
+            //     ValorTotal = c.Sum( cp => cp.ValorTotal )
             // }).ToListAsync();
 
 
-
-            string x = "";
-
             /*
-            using(var command = _context.Database.GetDbConnection().CreateCommand())
+            using(var command = _clienteRepository.Database.GetDbConnection().CreateCommand())
             {
-                command.CommandText = "select clientes.nome as nome, sum(pedidos.valor_total) as ValorTotal from pedidos " +
-                                        "inner join clientes on clientes.id = pedidos.cliente_id " +
-                                        "group by clientes.id";
+                command.CommandText = "SELECT clientes.nome, sum(pedidos.valor_total) as valor_total FROM pedidos inner join clientes on clientes.id = pedidos.cliente_id group by clientes.id";
+                _clienteRepository.Database.OpenConnection();
 
-                _context.Database.OpenConnection();
+                using(var result = await command.ExecuteReaderAsync())
+                {
+                    var pedidos_agrupados = new List<dynamic>();
+                    while(result.Read())
+                    {
+                        pedidos_agrupados.Add(new {
+                            Nome = result["nome"].ToString(),
+                            ValorTotal = Convert.ToDouble(result["valor_total"]),
+                        });
+                    }
 
+                    ViewBag.pedidos = pedidos_agrupados;
+                }
+                _clienteRepository.Database.CloseConnection();
+            }*/
 
-                   using (var result = await command.ExecuteReaderAsync())
-                   {
-                        var pedidos_agrupados = new List<dynamic>();
-                        while(result.Read())
-                        {
-                            pedidos_agrupados.Add(new{
-                                Nome = result["nome"].ToString(),
-                                ValorTotal = Convert.ToDouble(result["ValorTotal"]),
-                            });
-                        }
-                        ViewBag.pedidos = pedidos_agrupados;
-                   }
-
-                   _context.Database.CloseConnection();
-            }
-            */
-
-            /*
-            using(var command = _context.Database.GetDbConnection().CreateCommand())
+            /*using(var command = _clienteRepository.Database.GetDbConnection().CreateCommand())
             {
-                command.CommandText = "SELECT c.nome AS Cliente,p.valor_total AS ValorTotal, " +
-                   "p.id AS PedidoId, p0.quantidade AS Quantidade,p0.valor AS Valor, p1.nome AS Produto " +
-                   "FROM clientes AS c INNER JOIN pedidos AS p ON c.id = p.cliente_id " +
-                   "INNER JOIN pedidos_produtos AS p0 ON p.id = p0.pedido_id " +
-                   "INNER JOIN produtos AS p1 ON p0.produto_id = p1.id WHERE c.id = " + cliente.Id;
+                command.CommandText = "select clientes.nome as cliente, pedidos.valor_total, produtos.nome as produto, pedidos_produtos.quantidade, pedidos_produtos.valor  " +
+                    "from clientes " + 
+                    "inner join pedidos on pedidos.cliente_id = clientes.id " + 
+                    "inner join pedidos_produtos on pedidos_produtos.pedido_id = pedidos.id " +
+                    "inner join produtos on produtos.id = pedidos_produtos.produto_id " +
+                    "where clientes.id = " + cliente.Id;
+                _clienteRepository.Database.OpenConnection();
 
-                _context.Database.OpenConnection();
+                using(var result = await command.ExecuteReaderAsync())
+                {
+                    var pedidos = new List<ClientePedido>();
+                    while(result.Read())
+                    {
+                        pedidos.Add(new ClientePedido{
+                            Cliente = result["cliente"].ToString(),
+                            ValorTotal = Convert.ToDouble(result["valor_total"]),
+                            Quantidade = Convert.ToInt32(result["quantidade"]),
+                            Produto = result["produto"].ToString(),
+                            Valor = Convert.ToDouble(result["valor"]),
+                        });
+                    }
 
+                    ViewBag.pedidos = pedidos;
+                }
+                _clienteRepository.Database.CloseConnection();
+            }*/
 
-                   using (var result = await command.ExecuteReaderAsync())
-                   {
-                        var pedidos = new List<ClientePedido>();
-                        while(result.Read())
-                        {
-                            pedidos.Add(new ClientePedido{
-                                Cliente = result["cliente"].ToString(),
-                                ValorTotal = Convert.ToDouble(result["ValorTotal"]),
-                                PedidoId = Convert.ToInt32(result["PedidoId"]),
-                                Quantidade = Convert.ToInt32(result["quantidade"]),
-                                Valor = Convert.ToDouble(result["valor"]),
-                                Produto = result["produto"].ToString(),
-
-                            });
-                        }
-                        ViewBag.pedidos = pedidos;
-                   }
-
-                   _context.Database.CloseConnection();
-            }
-            */
-
-            /*
-            var pedidosContext = _context.Clientes.Where(c => c.Id == cliente.Id);
-            var pedidos = await pedidosContext.Join(
-                _context.Pedidos,
+            /*var pedidosContext = _clienteRepository.Clientes.Where(c => c.Id  == cliente.Id);
+            var pedidos =  pedidosContext.Join(
+                _clienteRepository.Pedidos,
                 cli => cli.Id,
                 ped => ped.ClienteId,
-
                 (cli, ped) => new ClientePedido {
                     Cliente = cli.Nome,
                     ValorTotal = ped.ValorTotal,
                     PedidoId = ped.Id
                 }
             ).Join(
-                _context.PedidosProdutos,
-                ped => ped.PedidoId,
+                _clienteRepository.PedidosProdutos,
+                pCliente => pCliente.PedidoId,
                 pp => pp.PedidoId,
-                (ped,pp) => new ClientePedido {
-                    Cliente = ped.Cliente,
-                    ValorTotal = ped.ValorTotal,
-                    PedidoId = ped.PedidoId,
+                (pCliente, pp) => new ClientePedido {
+                    Cliente = pCliente.Cliente,
+                    ValorTotal = pCliente.ValorTotal,
+                    PedidoId = pCliente.PedidoId,
                     Quantidade = pp.Quantidade,
                     Valor = pp.Valor,
                     ProdutoId = pp.ProdutoId,
                 }
             ).Join(
-                _context.Produtos,
+                _clienteRepository.Produtos,
                 pCliente => pCliente.ProdutoId,
                 produto => produto.Id,
-                (pCliente,produto) => new ClientePedido {
+                (pCliente, produto) => new ClientePedido {
                     Cliente = pCliente.Cliente,
                     ValorTotal = pCliente.ValorTotal,
                     PedidoId = pCliente.PedidoId,
@@ -249,31 +225,33 @@ namespace entity_framework.Controllers
                     Valor = pCliente.Valor,
                     Produto = produto.Nome,
                 }
-            ).ToListAsync(); // ToQueryString(); mostra o SQL GERADO
+            ).ToListAsync(); //.ToQueryString(); // mostra o SQL GERADO
             */
-
             /*
-                SELECT c.nome AS Cliente,
-                p.valor_total AS ValorTotal,
-                p.id AS PedidoId, p0.quantidade AS Quantidade,
-                p0.valor AS Valor, p1.nome AS Produto
-                FROM clientes AS c
-                INNER JOIN pedidos AS p ON c.id = p.cliente_id
-                INNER JOIN pedidos_produtos AS p0 ON p.id = p0.pedido_id
-                INNER JOIN produtos AS p1 ON p0.produto_id = p1.id
-                WHERE c.id = 3;
+            SET @__cliente_Id_0 = 1;
+
+            SELECT 
+            c.nome AS Cliente, 
+            p.valor_total AS ValorTotal, 
+            p.id AS PedidoId, 
+            p0.quantidade AS Quantidade, 
+            p0.valor AS Valor, 
+            p1.nome AS Produto
+            FROM clientes AS c
+            INNER JOIN pedidos AS p ON c.id = p.cliente_id
+            INNER JOIN pedidos_produtos AS p0 ON p.id = p0.pedido_id
+            INNER JOIN produtos AS p1 ON p0.produto_id = p1.id
+            WHERE c.id = @__cliente_Id_0
             */
 
-
-            //  ViewBag.pedidos = pedidos;
-
+            // ViewBag.pedidos = pedidos;
             return View(cliente);
         }
 
         // GET: Clientes/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["EnderecoId"] = new SelectList(_context.Enderecos, "Id", "Bairro");
+            ViewData["EnderecoId"] = new SelectList(await BuscarEnderecosClientes(), "Id", "Bairro");
             return View();
         }
 
@@ -282,35 +260,37 @@ namespace entity_framework.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nome,Observacao,EnderecoId")] Cliente cliente)
+        public async Task<IActionResult> Create([Bind("Id,Nome,Email,Observacao,EnderecoId")] Cliente cliente)
         {
             if (ModelState.IsValid)
             {
                 cliente.DataCadastro = DateTime.Now;
-                _context.Add(cliente);
-                var clienteEstado = _context.Entry<Cliente>(cliente);
-                var changeTracker = _context.ChangeTracker;
-                await _context.SaveChangesAsync();
+
+                //Manipulação change tracker
+                // var clienteEstado = _clienteRepository.Entry<Cliente>(cliente);
+                // _clienteRepository.Clientes.Add(cliente);
+                // var changeTracker = _clienteRepository.ChangeTracker;
+                // await _clienteRepository.SaveChangesAsync();
+
+                _clienteRepository.Adicionar(cliente);
+                await _clienteRepository.UnitOfWork.Commit();
+                await _mediator.PublicarEvento(new ClienteRegistradoEvento(cliente.Nome, cliente.DataCadastro, cliente.Email));
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EnderecoId"] = new SelectList(_context.Enderecos, "Id", "Bairro", cliente.EnderecoId);
+            ViewData["EnderecoId"] = new SelectList(await BuscarEnderecosClientes(), "Id", "Bairro", cliente.EnderecoId);
             return View(cliente);
         }
 
         // GET: Clientes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null || _context.Clientes == null)
-            {
-                return NotFound();
-            }
-
-            var cliente = await _context.Clientes.FindAsync(id);
+            var cliente = await _clienteRepository.BuscarClienteEndereco(id);
             if (cliente == null)
             {
                 return NotFound();
             }
-            ViewData["EnderecoId"] = new SelectList(_context.Enderecos, "Id", "Bairro", cliente.EnderecoId);
+            ViewData["EnderecoId"] = new SelectList(await BuscarEnderecosClientes(), "Id", "Bairro", cliente.EnderecoId);
             return View(cliente);
         }
 
@@ -330,12 +310,14 @@ namespace entity_framework.Controllers
             {
                 try
                 {
-                    _context.Update(cliente);
-                    await _context.SaveChangesAsync();
+                    // _clienteRepository.Update(cliente);
+                    // await _clienteRepository.SaveChangesAsync();
+                    _clienteRepository.Atualizar(cliente);
+                    await _clienteRepository.UnitOfWork.Commit();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ClienteExists(cliente.Id))
+                    if (!await ClienteExists(cliente.Id))
                     {
                         return NotFound();
                     }
@@ -346,21 +328,14 @@ namespace entity_framework.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EnderecoId"] = new SelectList(_context.Enderecos, "Id", "Bairro", cliente.EnderecoId);
+            ViewData["EnderecoId"] = new SelectList(await BuscarEnderecosClientes(), "Id", "Bairro", cliente.EnderecoId);
             return View(cliente);
         }
 
         // GET: Clientes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null || _context.Clientes == null)
-            {
-                return NotFound();
-            }
-
-            var cliente = await _context.Clientes
-                .Include(c => c.Endereco)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var cliente = await _clienteRepository.BuscarClienteEndereco(id);
             if (cliente == null)
             {
                 return NotFound();
@@ -374,23 +349,17 @@ namespace entity_framework.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Clientes == null)
-            {
-                return Problem("Entity set 'DbContexto.Clientes'  is null.");
-            }
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente != null)
-            {
-                _context.Clientes.Remove(cliente);
-            }
-
-            await _context.SaveChangesAsync();
+            // var cliente = await _clienteRepository.Clientes.FindAsync(id);
+            // _clienteRepository.Clientes.Remove(cliente);
+            // await _clienteRepository.SaveChangesAsync();
+            var cliente = await _clienteRepository.BuscarClienteEndereco(id);
+            _clienteRepository.Deletar(cliente);
+            await _clienteRepository.UnitOfWork.Commit();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ClienteExists(int id)
-        {
-            return _context.Clientes.Any(e => e.Id == id);
-        }
+        private async Task<bool> ClienteExists(int id) => await _clienteRepository.ClienteExiste(id);
+        private async Task<IEnumerable<Endereco>> BuscarEnderecosClientes() =>
+            (IEnumerable<Endereco>)await _clienteRepository.BuscarEnderecos();
     }
 }

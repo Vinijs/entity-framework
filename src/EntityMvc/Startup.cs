@@ -1,13 +1,15 @@
 using Entity.Produtos.Data.Contexto;
 using Entity.Pedidos.Data.Contexto;
 using Microsoft.EntityFrameworkCore;
-using Entity.Clientes.Domain.Entidades;
 using Entity.Clientes.Domain.Repositories;
 using Entity.Clientes.Data.Repositories;
 using Entity.Produtos.Domain.Repositories;
 using Entity.Produtos.Data.Repositories;
 using Entity.Pedidos.Domain.Repositories;
 using Entity.Pedidos.Data.Repositories;
+using Entity.Shared.Mediator;
+using Entity.Clientes.Application.Handlers;
+using Entity.Produtos.Application.Handlers;
 
 namespace entity_framework
 {
@@ -26,10 +28,10 @@ namespace entity_framework
             var stringConexao = Configuration.GetConnectionString("ConnectionString");
             //services.AddDbContext<DbContexto>(options => options.UseMySql(stringConexao, ServerVersion.AutoDetect(stringConexao)));
             services.AddDbContext<ProdutosDbContexto>(options => options.UseMySql(stringConexao, ServerVersion.AutoDetect(stringConexao)));
-            services.AddDbContext<ClienteDbContexto>(options => options.UseMySql(stringConexao, ServerVersion.AutoDetect(stringConexao)));
+            services.AddDbContext<Entity.Clientes.Domain.Entidades.ClienteDbContexto>(options => options.UseMySql(stringConexao, ServerVersion.AutoDetect(stringConexao)));
             services.AddDbContext<PedidoDbContexto>(options => options.UseMySql(stringConexao, ServerVersion.AutoDetect(stringConexao)));
             //registrar serviços
-            services.AddScoped<ClienteDbContexto>();
+            services.AddScoped<Entity.Clientes.Domain.Entidades.ClienteDbContexto>();
             services.AddScoped<ProdutosDbContexto>();
             services.AddScoped<PedidoDbContexto>();
 
@@ -37,6 +39,15 @@ namespace entity_framework
             services.AddScoped<IProdutosRepository, ProdutosRepository>();
             services.AddScoped<IFornecedoresRepository, FornecedoresRepository>();
             services.AddScoped<IPedidosRepository, PedidosRepository>();
+
+            //eventos
+            services.AddSingleton<IMediatorHandler, MediatorHandler>((_) => 
+            {
+                var mediator = new MediatorHandler();
+                mediator.RegistrarEventoHandler(new ClienteRegistradoEventoHandler());
+                mediator.RegistrarEventoHandler(new ProdutosPedidosEventoHandler());
+                return mediator;
+            });
 
             services.AddControllersWithViews();
         }

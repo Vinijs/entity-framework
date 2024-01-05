@@ -12,7 +12,7 @@ public partial class Pedido
         public int ClienteId { get; set; }
         public int EnderecoId { get; set; } //Endereço de entrega do pedido
         public decimal Desconto {get;set;}
-        public double ValorTotal { get; set; }
+        public decimal ValorTotal { get; set; }
         public DateTime Data { get; set; }
         public int CupomDescontoId {get;set;}
         public PedidoStatus PedidoStatus {get;set;}

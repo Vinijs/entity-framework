@@ -7,7 +7,7 @@ namespace Entity.Clientes.Data.Repositories
 {
     public class ClienteRepository : IClienteRepository
     {
-        private readonly ClienteDbContexto _contexto;
+         private readonly ClienteDbContexto _contexto;
         public ClienteRepository(ClienteDbContexto contexto)
         {
             _contexto = contexto;
