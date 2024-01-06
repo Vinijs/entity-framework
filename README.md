@@ -13,6 +13,7 @@
     dotnet add package Microsoft.EntityFrameworkCore --version 7.0.14
     dotnet add package Microsoft.EntityFrameworkCore.Tools --version 7.0.14
     dotnet add package Pomelo.EntityFrameworkCore.MySql --version 7.0.0
+    dotnet add package Microsoft.Extensions.DependencyInjection --injeção de dependência
 ```
 
 # Comandos git:

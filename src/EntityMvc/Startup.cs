@@ -10,6 +10,7 @@ using Entity.Pedidos.Data.Repositories;
 using Entity.Shared.Mediator;
 using Entity.Clientes.Application.Handlers;
 using Entity.Produtos.Application.Handlers;
+using Entity.Pedidos.Application.Handlers;
 
 namespace entity_framework
 {
@@ -41,11 +42,14 @@ namespace entity_framework
             services.AddScoped<IPedidosRepository, PedidosRepository>();
 
             //eventos
-            services.AddSingleton<IMediatorHandler, MediatorHandler>((_) => 
+            services.AddSingleton<IMediatorHandler, MediatorHandler>((provider) => 
             {
                 var mediator = new MediatorHandler();
                 mediator.RegistrarEventoHandler(new ClienteRegistradoEventoHandler());
                 mediator.RegistrarEventoHandler(new ProdutosPedidosEventoHandler());
+                mediator.RegistrarComandoHandler(new CadastrarPedidoHandler(provider));
+                mediator.RegistrarComandoHandler(new AtualizarPedidoHandler(provider));
+                mediator.RegistrarComandoHandler(new RemoverPedidoHandler(provider));
                 return mediator;
             });
 

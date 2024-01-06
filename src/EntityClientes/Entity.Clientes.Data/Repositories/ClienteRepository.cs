@@ -2,12 +2,11 @@ using Entity.Clientes.Domain.Entidades;
 using Entity.Clientes.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace Entity.Clientes.Data.Repositories
 {
     public class ClienteRepository : IClienteRepository
     {
-         private readonly ClienteDbContexto _contexto;
+        private readonly ClienteDbContexto _contexto;
         public ClienteRepository(ClienteDbContexto contexto)
         {
             _contexto = contexto;
@@ -39,5 +38,4 @@ namespace Entity.Clientes.Data.Repositories
 
         public void Dispose() => _contexto?.Dispose();
     }
-    
 }
