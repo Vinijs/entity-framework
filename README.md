@@ -47,22 +47,28 @@ dotnet aspnet-codegenerator controller -name ClientesController -m Cliente -dc D
 ```
 # Comando para adicionar projetos a solução vazia
 A partir de uma solução criada digitamos o comando para adicionar a referencia ao csproj dos projetos
+``` bash
  dotnet sln add src/entity-framework.csproj
  dotnet sln add src/EntityClientes/Entity.Clientes.Data/Entity.Clientes.Data.csproj
  dotnet sln add src/EntityPedidos/Entity.Pedidos.Data/Entity.Pedidos.Data.csproj
  dotnet sln add src/EntityProdutos/Entity.Produtos.Data/Entity.Produtos.Data.csproj
  dotnet sln remove src/ClienteContexto/ClienteContexto.csproj
+```
 
 ## Comando para adicionar referencia em outros projetos
-dotnet add reference ../Entity.Clientes.Domain/Entity.Clientes.Domain.csproj
+```bash
+ dotnet add reference ../Entity.Clientes.Domain/Entity.Clientes.Domain.csproj
+```
 
 # Gerando scaffold Contexto e Tabelas
 ## Comando para contexto Clientes
- dotnet ef dbcontext scaffold "server=localhost;database=EntityFrameworkComunidade;uid=root;pwd=carroforte" Pomelo.EntityFrameworkCore.MySql -t clientes -t enderecos -f -c ClienteDbContexto -o Contexto
+```bash 
+dotnet ef dbcontext scaffold "server=localhost;database=EntityFrameworkComunidade;uid=root;pwd=carroforte" Pomelo.EntityFrameworkCore.MySql -t clientes -t enderecos -f -c ClienteDbContexto -o Contexto
 
  dotnet ef dbcontext scaffold "server=localhost;database=EntityFrameworkComunidade;uid=root;pwd=carroforte" Pomelo.EntityFrameworkCore.MySql -n Entity.Clientes.Domain.Entidades -t clientes -t enderecos -f -c ClienteDbContexto --context-dir Contexto --output-dir ..\Entity.Clientes.Domain\Entidades
 
  dotnet ef dbcontext scaffold "server=localhost;database=EntityFrameworkComunidade;uid=root;pwd=carroforte" Pomelo.EntityFrameworkCore.MySql -n Entity.Domain.Produtos.Entidades -t produtos -f -c ProdutosDbContexto --context-dir Contexto --output-dir ..\Entity.Produtos.Domain\Entidades
+```
 
  # Geração de scripts via entity
  ``` bash
@@ -76,5 +82,3 @@ dotnet add reference ../Entity.Clientes.Domain/Entity.Clientes.Domain.csproj
     Documentação completa entity-framework : https://docs.microsoft.com/pt-br/ef/
     Documentação auxiliar para o uso da FluentAPI/Ef Core : https://www.entityframeworktutorial.net/
  ```
-
-

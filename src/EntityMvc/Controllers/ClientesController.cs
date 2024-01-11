@@ -1,8 +1,3 @@
-using System.Security.Claims;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +5,8 @@ using Entity.Clientes.Domain.Entidades;
 using Entity.Clientes.Domain.Repositories;
 using Entity.Shared.Mediator;
 using Entity.Clientes.Application.Events;
+using Entity.Pedidos.Domain.Entidades;
+using Entity.Produtos.Entidades;
 
 namespace entity_framework.Controllers
 {
@@ -363,7 +360,7 @@ namespace entity_framework.Controllers
         }
 
         private async Task<bool> ClienteExists(int id) => await _clienteRepository.ClienteExiste(id);
-        private async Task<IEnumerable<Endereco>> BuscarEnderecosClientes() =>
-            (IEnumerable<Endereco>)await _clienteRepository.BuscarEnderecos();
+        private async Task<IEnumerable<Entity.Clientes.Domain.Entidades.Endereco>> BuscarEnderecosClientes() =>
+            (IEnumerable<Entity.Clientes.Domain.Entidades.Endereco>)await _clienteRepository.BuscarEnderecos();
     }
 }
